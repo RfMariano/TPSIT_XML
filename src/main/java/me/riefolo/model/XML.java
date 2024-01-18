@@ -27,6 +27,10 @@ public class XML {
         return xmlDocument.getElementById(id);
     }
 
+    public Element getRootElement() {
+        return xmlDocument.getDocumentElement();
+    }
+
     public void addElement(Element parentElement, Element element) {
         parentElement.appendChild(element);
     }
