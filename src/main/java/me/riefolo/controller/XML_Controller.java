@@ -15,6 +15,15 @@ import java.util.ArrayList;
 public class XML_Controller {
     public XML_Controller(File xmlFile) throws ParserConfigurationException, IOException, SAXException {
         xml = new XML(xmlFile);
+        elements = getAll();
+    }
+
+    public String[] getStringElements() {
+        String[] stringElements = new String[elements.size()];
+        for (int i = 0; i < elements.size(); i++) {
+            stringElements[i] = elements.get(i).getFirst();
+        }
+        return stringElements;
     }
 
     public ArrayList<Pair<String, Element>> getDescendants(Element element) {
@@ -40,5 +49,15 @@ public class XML_Controller {
         return getDescendants(xml.getRootElement());
     }
 
+    public void addElement(int parentElementIndex, String elementTagName) {
+        Element newElement = xml.makeNewElement(elementTagName);
+        elements.get(parentElementIndex).getSecond().appendChild(newElement);
+        // TODO add the new element in the right position inside the elements arraylist
+        // elements.add(parentElementIndex, new Pair<>(elementTagName, newElement));
+        xml.saveToFile();
+        elements = getAll();
+    }
+
     private final XML xml;
+    private ArrayList<Pair<String, Element>> elements;
 }
