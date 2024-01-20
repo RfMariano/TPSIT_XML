@@ -2,8 +2,6 @@ package me.riefolo.model;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -28,14 +26,6 @@ public class XML {
         xmlDocument.getDocumentElement().normalize();
     }
 
-    public NodeList getElementsByTagName(String tagName) {
-        return xmlDocument.getElementsByTagName(tagName);
-    }
-
-    public Node getElementById(String id) {
-        return xmlDocument.getElementById(id);
-    }
-
     public Element getRootElement() {
         return xmlDocument.getDocumentElement();
     }
@@ -46,7 +36,7 @@ public class XML {
 
     public void saveToFile() {
         TransformerFactory transFactory = TransformerFactory.newInstance();
-        Transformer transformer = null;
+        Transformer transformer;
         try {
             transformer = transFactory.newTransformer();
         } catch (TransformerConfigurationException e) {
@@ -70,6 +60,10 @@ public class XML {
         }
     }
 
+    public void removeElement(Element element) {
+        element.getParentNode().removeChild(element);
+    }
+
     private final Document xmlDocument;
-    private String filePath;
+    private final String filePath;
 }

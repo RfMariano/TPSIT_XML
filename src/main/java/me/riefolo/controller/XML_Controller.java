@@ -49,15 +49,31 @@ public class XML_Controller {
         return getDescendants(xml.getRootElement());
     }
 
+    private int getElementDepth(int index) {
+        String element = elements.get(index).getFirst();
+        return element.length() - element.replaceFirst("^\\s+", "").length();
+    }
+
     public void addElement(int parentElementIndex, String elementTagName) {
         Element newElement = xml.makeNewElement(elementTagName);
         elements.get(parentElementIndex).getSecond().appendChild(newElement);
-        // TODO add the new element in the right position inside the elements arraylist
-        // elements.add(parentElementIndex, new Pair<>(elementTagName, newElement));
+        elements.add(parentElementIndex+1, new Pair<>(" ".repeat(getElementDepth(parentElementIndex) + 2) + elementTagName, newElement));
         xml.saveToFile();
-        elements = getAll();
+    }
+
+    public int removeElement(int elementIndex) {
+        xml.removeElement(elements.get(elementIndex).getSecond());
+        int elementDepth = getElementDepth(elementIndex);
+        int removed = 0;
+        do {
+            elements.remove(elementIndex);
+            removed++;
+        } while (getElementDepth(elementIndex) > elementDepth);
+        xml.saveToFile();
+        return removed;
     }
 
     private final XML xml;
-    private ArrayList<Pair<String, Element>> elements;
+
+    private final ArrayList<Pair<String, Element>> elements;
 }

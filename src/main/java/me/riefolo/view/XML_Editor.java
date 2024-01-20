@@ -5,7 +5,6 @@ import me.riefolo.controller.XML_Controller;
 import org.xml.sax.SAXException;
 
 import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.io.File;
@@ -32,7 +31,7 @@ public class XML_Editor extends JFrame {
         infoLabel.setVerticalAlignment(JLabel.CENTER);
         frame.add(infoLabel, BorderLayout.CENTER);
 
-        JPanel buttonsPanel = getButtonsPanel();
+        buttonsPanel = getButtonsPanel();
         frame.add(buttonsPanel, BorderLayout.EAST);
 
         model = new DefaultListModel<>();
@@ -44,22 +43,49 @@ public class XML_Editor extends JFrame {
 
     private JPanel getButtonsPanel() {
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
+
+        buttonsPanel.setVisible(false);
+        // buttonsPanel.setBorder(new BevelBorder(BevelBorder.LOWERED)); // DEBUG ONLY
+        buttonsPanel.setPreferredSize(new Dimension(frame.getWidth()/2, frame.getHeight()));
+
         buttonsPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
         buttonsPanel.setAlignmentY(JPanel.CENTER_ALIGNMENT);
-        JButton addElement = new JButton("Aggiungi elemento");
-        addElement.addActionListener(e -> {
-            if (xmlList == null) {
+
+        JButton addElementButton = getAddElementButton();
+        buttonsPanel.add(addElementButton);
+
+        JButton removeElementButton = getRemoveElementButton();
+        buttonsPanel.add(removeElementButton);
+
+        return buttonsPanel;
+    }
+
+    private JButton getRemoveElementButton() {
+        JButton removeElementButton = new JButton("Rimuovi elemento");
+        removeElementButton.addActionListener(e -> {
+            if (xmlList == null)
                 JOptionPane.showMessageDialog(frame, "Devi prima aprire un file xml");
-            } else if (xmlList.getSelectedIndex() == -1) {
+            else if (xmlList.getSelectedIndex() == -1)
                 JOptionPane.showMessageDialog(frame, "Devi prima selezionare un elemento");
-            } else
+            else
+                removeElement();
+        });
+        return removeElementButton;
+    }
+
+    private JButton getAddElementButton() {
+        JButton addElementButton = new JButton("Aggiungi elemento");
+        addElementButton.addActionListener(e -> {
+            if (xmlList == null)
+                JOptionPane.showMessageDialog(frame, "Devi prima aprire un file xml");
+            else if (xmlList.getSelectedIndex() == -1)
+                JOptionPane.showMessageDialog(frame, "Devi prima selezionare un elemento");
+            else
             popupInput = JOptionPane.showInputDialog(frame,
                     "Quale dev'essere il nome del tag?", null);
             addElement();
         });
-        buttonsPanel.add(addElement);
-        return buttonsPanel;
+        return addElementButton;
     }
 
     private void setMenu() {
@@ -82,6 +108,7 @@ public class XML_Editor extends JFrame {
             try {
                 controller = new XML_Controller(xmlFile);
                 infoLabel.setVisible(false);
+                buttonsPanel.setVisible(true);
 
                 model.clear();
                 for (String element : controller.getStringElements()) {
@@ -92,6 +119,7 @@ public class XML_Editor extends JFrame {
             } catch (ParserConfigurationException | IOException | SAXException e) {
                 infoLabel.setText("Il file selezionato potrebbe non contenere del codice XML valido");
                 infoLabel.setVisible(true);
+                buttonsPanel.setVisible(false);
             }
         }
     }
@@ -99,8 +127,13 @@ public class XML_Editor extends JFrame {
     private void addElement() {
         if (popupInput == null || popupInput.isEmpty()) return;
         controller.addElement(xmlList.getSelectedIndex(), popupInput);
-        model.add(xmlList.getSelectedIndex()+1, popupInput);
+        model.add(xmlList.getSelectedIndex()+1, controller.getStringElements()[xmlList.getSelectedIndex()+1]);
         popupInput = null;
+    }
+
+    private void removeElement() {
+        int removed = controller.removeElement(xmlList.getSelectedIndex());
+        model.removeRange(xmlList.getSelectedIndex(), xmlList.getSelectedIndex()+removed-1);
     }
 
     private final JFrame frame;
@@ -110,4 +143,5 @@ public class XML_Editor extends JFrame {
     private XML_Controller controller;
     private String popupInput;
     private DefaultListModel<String> model;
+    private JPanel buttonsPanel;
 }
