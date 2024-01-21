@@ -11,6 +11,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class XML_Controller {
     public XML_Controller(File xmlFile) throws ParserConfigurationException, IOException, SAXException {
@@ -34,7 +35,12 @@ public class XML_Controller {
 
     private void getDescendants(Element element, int depth, ArrayList<Pair<String, Element>> descendants) {
         NodeList childNodes = element.getChildNodes();
-        descendants.add(new Pair<>("  ".repeat(depth) + element.getNodeName() + (childNodes.getLength() == 1 ? ": " + element.getTextContent().trim() : ""), element));
+        StringBuilder attributes = new StringBuilder("[");
+        Optional.ofNullable(element.getAttributes().item(0)).ifPresent(attributes::append);
+        for (int i=1; i<element.getAttributes().getLength(); i++) {
+            attributes.append(";").append(element.getAttributes().item(i));
+        }
+        descendants.add(new Pair<>("  ".repeat(depth) + element.getNodeName() + (attributes.toString().equals("[") ? "" : attributes+"]") + (childNodes.getLength() == 1 ? ": " + element.getTextContent().trim() : ""), element));
 
         for (int i = 0; i < childNodes.getLength(); i++) {
             Node childNode = childNodes.item(i);
@@ -71,6 +77,39 @@ public class XML_Controller {
         } while (getElementDepth(elementIndex) > elementDepth);
         xml.saveToFile();
         return removed;
+    }
+
+    public void setText(int elementIndex, String text) {
+        elements.get(elementIndex).getSecond().setTextContent(text);
+        xml.saveToFile();
+    }
+
+    public boolean hasChildren(int elementIndex) {
+        return elements.get(elementIndex).getSecond().getChildNodes().getLength() > 1;
+    }
+
+    public boolean setAttributes(int elementIndex, String attributes) {
+        try {
+            Element element = elements.get(elementIndex).getSecond();
+            while (element.getAttributes().getLength() > 0) {
+                elements.get(elementIndex).getSecond().removeAttribute(element.getAttributes().item(0).toString().split("=")[0]);
+            }
+            if (!attributes.isEmpty()) {
+                for (String attribute : attributes.split(";")) {
+                    element.setAttribute(removeDoubleQuotes(attribute.split("=")[0]), removeDoubleQuotes(attribute.split("=")[1]));
+                }
+            }
+            xml.saveToFile();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return false;
+        }
+        return true;
+    }
+
+    private String removeDoubleQuotes(String text) {
+        if (text.startsWith("\"") && text.endsWith("\""))
+            return text.substring(1, text.length() - 1);
+        return text;
     }
 
     private final XML xml;

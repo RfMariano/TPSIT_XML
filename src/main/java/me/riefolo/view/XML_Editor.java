@@ -57,6 +57,12 @@ public class XML_Editor extends JFrame {
         JButton removeElementButton = getRemoveElementButton();
         buttonsPanel.add(removeElementButton);
 
+        JButton modifyTextButton = getModifyTextButton();
+        buttonsPanel.add(modifyTextButton);
+
+        JButton modifyAttributesButton = getModifyAttributesButton();
+        buttonsPanel.add(modifyAttributesButton);
+
         return buttonsPanel;
     }
 
@@ -81,11 +87,47 @@ public class XML_Editor extends JFrame {
             else if (xmlList.getSelectedIndex() == -1)
                 JOptionPane.showMessageDialog(frame, "Devi prima selezionare un elemento");
             else
-            popupInput = JOptionPane.showInputDialog(frame,
-                    "Quale dev'essere il nome del tag?", null);
+                popupInput = JOptionPane.showInputDialog(frame,
+                        "Quale dev'essere il nome del tag?", null);
             addElement();
         });
         return addElementButton;
+    }
+
+    private JButton getModifyTextButton() {
+        JButton modifyTextButton = new JButton("Modifica testo");
+        modifyTextButton.addActionListener(e -> {
+            if (xmlList == null)
+                JOptionPane.showMessageDialog(frame, "Devi prima aprire un file xml");
+            else if (xmlList.getSelectedIndex() == -1)
+                JOptionPane.showMessageDialog(frame, "Devi prima selezionare un elemento");
+            else if (controller.hasChildren(xmlList.getSelectedIndex()))
+                JOptionPane.showMessageDialog(frame, "I tag con figli non possono contenere testo");
+            else {
+                String elementText = model.getElementAt(xmlList.getSelectedIndex());
+                popupInput = JOptionPane.showInputDialog(frame,
+                        "Inserisci il testo da inserire all'interno del tag", elementText.contains(":") ? elementText.substring(elementText.indexOf(':')+2) : "");
+            }
+            modifyText();
+        });
+        return modifyTextButton;
+    }
+
+    private JButton getModifyAttributesButton() {
+        JButton modifyAttributesButton = new JButton("Modifica attributi");
+        modifyAttributesButton.addActionListener(e -> {
+            if (xmlList == null)
+                JOptionPane.showMessageDialog(frame, "Devi prima aprire un file xml");
+            else if (xmlList.getSelectedIndex() == -1)
+                JOptionPane.showMessageDialog(frame, "Devi prima selezionare un elemento");
+            else {
+                String elementText = model.getElementAt(xmlList.getSelectedIndex());
+                popupInput = JOptionPane.showInputDialog(frame,
+                        "Inserisci il valore degli attributi", elementText.contains("[") ? elementText.substring(elementText.indexOf('[')+1, elementText.indexOf(']')) : "");
+            }
+            modifyAttributes();
+        });
+        return modifyAttributesButton;
     }
 
     private void setMenu() {
@@ -125,7 +167,10 @@ public class XML_Editor extends JFrame {
     }
 
     private void addElement() {
-        if (popupInput == null || popupInput.isEmpty()) return;
+        if (popupInput == null) return;
+        if (popupInput.isEmpty()) {
+            JOptionPane.showMessageDialog(frame, "Nessun contenuto inserito");
+        }
         controller.addElement(xmlList.getSelectedIndex(), popupInput);
         model.add(xmlList.getSelectedIndex()+1, controller.getStringElements()[xmlList.getSelectedIndex()+1]);
         popupInput = null;
@@ -134,6 +179,36 @@ public class XML_Editor extends JFrame {
     private void removeElement() {
         int removed = controller.removeElement(xmlList.getSelectedIndex());
         model.removeRange(xmlList.getSelectedIndex(), xmlList.getSelectedIndex()+removed-1);
+    }
+
+    private void modifyText() {
+        if (popupInput == null) return;
+        controller.setText(xmlList.getSelectedIndex(), popupInput);
+        String element = model.getElementAt(xmlList.getSelectedIndex());
+        if (popupInput.isEmpty() && element.contains(":"))
+            model.setElementAt(element.substring(0, element.indexOf(':')), xmlList.getSelectedIndex());
+        else if (!popupInput.isEmpty())
+            model.setElementAt((element.contains(":") ? element.substring(0, element.indexOf(':')) : element) + ": " + popupInput, xmlList.getSelectedIndex());
+        popupInput = null;
+    }
+
+    private void modifyAttributes() {
+        if (popupInput == null) return;
+        if (!controller.setAttributes(xmlList.getSelectedIndex(), popupInput)) {
+            JOptionPane.showMessageDialog(frame, "Il contenuto inserito non è valido");
+            return;
+        }
+        String element = model.getElementAt(xmlList.getSelectedIndex());
+        if (popupInput.isEmpty() && element.contains("["))
+            model.setElementAt(element.substring(0, element.indexOf('[')) + element.substring(element.indexOf(']')+1), xmlList.getSelectedIndex());
+        else if (!popupInput.isEmpty()) {
+            String firstPart;
+            if (element.contains("[")) firstPart = element.substring(0, element.indexOf('['));
+            else if (element.contains(":")) firstPart = element.substring(0, element.indexOf(':'));
+            else firstPart = element;
+            model.setElementAt(firstPart + "[" + popupInput + "]" + element.substring(element.indexOf(":")), xmlList.getSelectedIndex());
+        }
+        popupInput = null;
     }
 
     private final JFrame frame;
