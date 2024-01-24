@@ -17,6 +17,7 @@ public class XML_Controller {
     public XML_Controller(File xmlFile) throws ParserConfigurationException, IOException, SAXException {
         xml = new XML(xmlFile);
         elements = getAll();
+        modified = false;
     }
 
     public String[] getStringElements() {
@@ -64,7 +65,7 @@ public class XML_Controller {
         Element newElement = xml.makeNewElement(elementTagName);
         elements.get(parentElementIndex).getSecond().appendChild(newElement);
         elements.add(parentElementIndex+1, new Pair<>(" ".repeat(getElementDepth(parentElementIndex) + 2) + elementTagName, newElement));
-        xml.saveToFile();
+        modified = true;
     }
 
     public int removeElement(int elementIndex) {
@@ -75,13 +76,13 @@ public class XML_Controller {
             elements.remove(elementIndex);
             removed++;
         } while (getElementDepth(elementIndex) > elementDepth);
-        xml.saveToFile();
+        modified = true;
         return removed;
     }
 
     public void setText(int elementIndex, String text) {
         elements.get(elementIndex).getSecond().setTextContent(text);
-        xml.saveToFile();
+        modified = true;
     }
 
     public boolean hasChildren(int elementIndex) {
@@ -99,7 +100,7 @@ public class XML_Controller {
                     element.setAttribute(removeDoubleQuotes(attribute.split("=")[0]), removeDoubleQuotes(attribute.split("=")[1]));
                 }
             }
-            xml.saveToFile();
+            modified = true;
         } catch (ArrayIndexOutOfBoundsException e) {
             return false;
         }
@@ -112,7 +113,17 @@ public class XML_Controller {
         return text;
     }
 
+    public void save() {
+        xml.saveToFile();
+        modified = false;
+    }
+
+    public boolean hasBeenModified() {
+        return modified;
+    }
+
     private final XML xml;
 
     private final ArrayList<Pair<String, Element>> elements;
+    boolean modified;
 }

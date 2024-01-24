@@ -7,6 +7,8 @@ import org.xml.sax.SAXException;
 import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 
@@ -15,6 +17,23 @@ public class XML_Editor extends JFrame {
         FlatDarkLaf.setup();
         frame = new JFrame();
 
+        frame.addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                if (controller != null && controller.hasBeenModified()) {
+                    int choice = JOptionPane.showConfirmDialog(null, "Vuoi salvare le modifiche?",
+                            "Dati modificati", JOptionPane.YES_NO_CANCEL_OPTION);
+
+                    if (choice == JOptionPane.YES_OPTION)
+                        controller.save();
+                    else if (choice == JOptionPane.CANCEL_OPTION)
+                        return;
+                }
+                frame.dispose();
+                System.exit(0);
+            }
+        });
+
+
         initComponents();
         frame.setVisible(true);
     }
@@ -22,7 +41,7 @@ public class XML_Editor extends JFrame {
     private void initComponents() {
         frame.setSize(500,500);
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         setMenu();
 
@@ -45,11 +64,7 @@ public class XML_Editor extends JFrame {
         JPanel buttonsPanel = new JPanel();
 
         buttonsPanel.setVisible(false);
-        // buttonsPanel.setBorder(new BevelBorder(BevelBorder.LOWERED)); // DEBUG ONLY
-        buttonsPanel.setPreferredSize(new Dimension(frame.getWidth()/2, frame.getHeight()));
-
-        buttonsPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-        buttonsPanel.setAlignmentY(JPanel.CENTER_ALIGNMENT);
+        // buttonsPanel.setPreferredSize(new Dimension(frame.getWidth()/2, frame.getHeight()));
 
         JButton addElementButton = getAddElementButton();
         buttonsPanel.add(addElementButton);
@@ -63,6 +78,7 @@ public class XML_Editor extends JFrame {
         JButton modifyAttributesButton = getModifyAttributesButton();
         buttonsPanel.add(modifyAttributesButton);
 
+        buttonsPanel.setLayout(new GridLayout(buttonsPanel.getComponentCount(), 1));
         return buttonsPanel;
     }
 
@@ -134,15 +150,30 @@ public class XML_Editor extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         JMenu fileMenu = new JMenu("File");
+
         JMenuItem openMenuItem = new JMenuItem("Apri");
         openMenuItem.addActionListener(e -> openFile());
         fileMenu.add(openMenuItem);
+
+        JMenuItem saveMenuItem = new JMenuItem("Salva");
+        saveMenuItem.addActionListener(e -> controller.save());
+        fileMenu.add(saveMenuItem);
 
         menuBar.add(fileMenu);
         frame.setJMenuBar(menuBar);
     }
 
     private void openFile() {
+        if (controller != null && controller.hasBeenModified()) {
+            int choice = JOptionPane.showConfirmDialog(null, "Vuoi salvare le modifiche?",
+                    "Dati modificati", JOptionPane.YES_NO_CANCEL_OPTION);
+
+            if (choice == JOptionPane.YES_OPTION)
+                controller.save();
+            else if (choice == JOptionPane.CANCEL_OPTION)
+                return;
+        }
+
         JFileChooser fileChooser = new JFileChooser();
         int result = fileChooser.showOpenDialog(frame);
         if (result == JFileChooser.APPROVE_OPTION) {
@@ -206,7 +237,7 @@ public class XML_Editor extends JFrame {
             if (element.contains("[")) firstPart = element.substring(0, element.indexOf('['));
             else if (element.contains(":")) firstPart = element.substring(0, element.indexOf(':'));
             else firstPart = element;
-            model.setElementAt(firstPart + "[" + popupInput + "]" + element.substring(element.indexOf(":")), xmlList.getSelectedIndex());
+            model.setElementAt(firstPart + "[" + popupInput + "]" + (element.contains(":") ? element.substring(element.indexOf(":")) : ""), xmlList.getSelectedIndex());
         }
         popupInput = null;
     }
